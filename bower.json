@@ -17,6 +17,6 @@
     "bootstrap": "~3.3.6",
     "components-font-awesome": "~4.4.0",
     "jquery": "~2.1.4",
-    "doT" : "~1.0.1"
+    "doT": "~1.0.1"
   }
 }
