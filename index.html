@@ -12,32 +12,53 @@
 
 <!--<div class="container">-->
   <h2>Journal</h2>
-  <button class="btn btn-success"><i class="fa fa-plus-circle" aria-hidden="true"></i> Add record</button>
+  <button class="btn btn-success pull-right"><i class="fa fa-plus-circle" aria-hidden="true"></i> Add record</button>
 
   <table class="table">
 	<thead>
 	  <tr>
-		<th>Firstname</th>
-		<th>Lastname</th>
-		<th>Email</th>
+	    <th class="col-md-1">Actions</th>
+		<th class="col-md-2">Firstname</th>
+		<th class="col-md-3">Lastname</th>
+		<th class="col-md-6">Email</th>
 	  </tr>
 	</thead>
 	<tbody>
 	  <tr>
-		<td>John</td>
-		<td>Doe</td>
-		<td>john@example.com</td>
+		  <td >
+			  <div class="btn-group" role="group" aria-label="Basic example">
+				  <button type="button" class="btn btn-warning">Edit</button>
+				  <button type="button" class="btn btn-danger">Delete</button>
+			  </div>
+		  </td>
+		<td >John</td>
+		<td >Doe</td>
+		<td >john@example.com</td>
+
 	  </tr>
 	  <tr>
+		  <td>
+			  <div class="btn-group" role="group" aria-label="Basic example">
+				  <button type="button" class="btn btn-warning">Edit</button>
+				  <button type="button" class="btn btn-danger">Delete</button>
+			  </div>
+		  </td>
 		<td>Mary</td>
 		<td>Moe</td>
 		<td>mary@example.com</td>
 	  </tr>
 	  <tr>
+		  <td>
+			  <div class="btn-group" role="group" aria-label="Basic example">
+				  <button type="button" class="btn btn-warning">Edit</button>
+				  <button type="button" class="btn btn-danger">Delete</button>
+			  </div>
+		  </td>
 		<td>July</td>
 		<td>Dooley</td>
 		<td>july@example.com</td>
 	  </tr>
+
 	</tbody>
   </table>
 <!--</div>-->
