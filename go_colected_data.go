@@ -165,7 +165,7 @@ func main() {
 
 	// Static
 	r.Static("/public", "./public")
-	r.Static("/bower_components", "./bower_components")
+
 	// render
 	r.LoadHTMLGlob("tpl/*")
 //	r.HTMLRender = createMyRender()
