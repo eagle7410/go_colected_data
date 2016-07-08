@@ -2,9 +2,8 @@ package main
 
 import (
 	"github.com/gin-gonic/contrib/renders/multitemplate"
-//    "github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
-//	"html/template"
+	"path/filepath"
 	"io/ioutil"
 	//"net/http"
 	"strconv"
@@ -167,25 +166,32 @@ func main() {
 	r.Static("/public", "./public")
 
 	// render
-	r.LoadHTMLGlob("tpl/*")
-//	r.HTMLRender = createMyRender()
+	//r.LoadHTMLGlob("tpl/*")
+	r.HTMLRender = createMyRender("def")
 
 
 	r.GET("/", func (c *gin.Context) {
 //		r.HTMLTemplates = template.Must(template.ParseFiles("templates/layout.html", "templates/home.html"))
-		c.HTML(200, "index.html", gin.H{})
+//		c.HTML(200, "index", gin.H{ "name" : "Qwerty"})
 
 	})
 
 	r.Run(":" + p.port) // listen and server on 0.0.0.0:8080
 }
 
-func createMyRender() multitemplate.Render {
+func createMyRender(layout string) multitemplate.Render {
 	r := multitemplate.New()
-	r.AddFromFiles("index", "base.html", "base.html")
-	r.AddFromFiles("article", "base.html", "article.html")
-	r.AddFromFiles("login", "base.html", "login.html")
-	r.AddFromFiles("dashboard", "base.html", "dashboard.html")
+	files, err := filepath.Glob("tpl/*.html")
+
+	if err != nil {
+		panic(err.Error())
+	}
+	// ** https://github.com/gin-gonic/contrib/tree/master/renders/multitemplate
+	fmt.Println("tpl ->", files)
+	//r.AddFromFiles("index", "tpl/index.html", "tpl/layouts/" + layout +"/head.html","tpl/layouts/"+ layouts +"/postEnd.html")
+	//r.AddFromFiles("article", "base.html", "article.html")
+	//r.AddFromFiles("login", "base.html", "login.html")
+	//r.AddFromFiles("dashboard", "base.html", "dashboard.html")
 
 	return r
 }

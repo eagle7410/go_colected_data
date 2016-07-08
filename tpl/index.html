@@ -1,18 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<title>Journal</title>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="shortcut icon" href="favicon.ico" />
-	<link rel="stylesheet" href="../public/bower_components/bootstrap/dist/css/bootstrap.min.css">
-	<link rel="stylesheet" href="../public/bower_components/components-font-awesome/css/font-awesome.min.css">
-	<link rel="stylesheet" type="text/css" href="../public/bower_components/bootstrap-sweetalert/dist/sweetalert.css">
-</head>
+{{template "head"}}
 <body>
 
 	<h2>Journal</h2>
-	<a href="../record_add.html" class="btn btn-success pull-right"><i class="fa fa-plus-circle" aria-hidden="true"></i> Add record</a>
+	<a href="record_add.html" class="btn btn-success pull-right"><i class="fa fa-plus-circle" aria-hidden="true"></i> Add record</a>
 
 	<table class="table">
 		<thead>
@@ -32,7 +22,7 @@
 					  <button type="button" class="btn btn-danger"><i class="fa fa-trash-o" aria-hidden="true"></i> Delete</button>
 				  </div>
 			  </td>
-			<td >John</td>
+			<td > {{ .name }}</td>
 			<td >Doe</td>
 			<td >john@example.com</td>
 			<td><textarea class="form-control" id="exampleTextarea" rows="3">fsafdf</textarea></td>
@@ -63,10 +53,6 @@
 		</tbody>
 	</table>
 </body>
-<script src="../public/bower_components/jquery/dist/jquery.min.js"></script>
-<script src="../public/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
-<script src="../public/js/jquery.doT.plugin.js"></script>
-<script src="../public/js/jquery.ajaxHelper.js"></script>
-<script src="../public/bower_components/bootstrap-sweetalert/dist/sweetalert.min.js"></script>
+{{template "postEnd"}}
 <script src="../public/js/main.js"></script>
 </html>
