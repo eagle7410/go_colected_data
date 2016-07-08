@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 //	"html/template"
 	"io/ioutil"
-	"net/http"
+	//"net/http"
 	"strconv"
 	"strings"
 	"bytes"
@@ -164,6 +164,8 @@ func main() {
 	r := gin.New()
 
 	// Static
+	r.Static("/public", "./public")
+	r.Static("/bower_components", "./bower_components")
 	// render
 	r.LoadHTMLGlob("tpl/*")
 //	r.HTMLRender = createMyRender()
