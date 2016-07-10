@@ -1,8 +1,10 @@
 /* global doT, $ */
 /* exported tplRet */
-
+function tplGet(tplId) {
+	return $('#tpl_' + tplId).html().replace(/\{\&/g, '{{').replace(/\&\}/g, '}}');
+}
 $.fn.tpl = function (tplId, data) {
-	var tpl = doT.template($('#tpl_' + tplId).html());
+	var tpl = doT.template(tplGet(tplId));
 
 	if (!$.isArray(data)) {
 		data = [data];
@@ -20,7 +22,7 @@ $.fn.tpl = function (tplId, data) {
 };
 
 $.fn.tplReplace = function (tplId, data) {
-	var tpl = doT.template($('#tpl_' + tplId).html());
+	var tpl = doT.template(tplGet(tplId));
 
 	if (!$.isArray(data)) {
 		data = [data];
@@ -38,7 +40,7 @@ $.fn.tplReplace = function (tplId, data) {
 };
 
 $.fn.tplAppend = function (tplId, data) {
-	var tpl = doT.template($('#tpl_' + tplId).html());
+	var tpl = doT.template(tplGet(tplId));
 
 	if (!$.isArray(data)) {
 		data = [data];
@@ -56,7 +58,7 @@ $.fn.tplAppend = function (tplId, data) {
 };
 
 $.fn.tplPrepend = function (tplId, data) {
-	var tpl = doT.template($('#tpl_' + tplId).html());
+	var tpl = doT.template(tplGet(tplId));
 
 	if (!$.isArray(data)) {
 		data = [data];
@@ -74,7 +76,7 @@ $.fn.tplPrepend = function (tplId, data) {
 };
 
 $.fn.tplBefore = function (tplId, data) {
-	var tpl = doT.template($('#tpl_' + tplId).html());
+	var tpl = doT.template(tplGet(tplId));
 
 	if (!$.isArray(data)) {
 		data = [data];
@@ -92,7 +94,7 @@ $.fn.tplBefore = function (tplId, data) {
 };
 
 $.fn.tplAfter = function (tplId, data) {
-	var tpl = doT.template($('#tpl_' + tplId).html());
+	var tpl = doT.template(tplGet(tplId));
 
 	if (!$.isArray(data)) {
 		data = [data];
@@ -110,7 +112,7 @@ $.fn.tplAfter = function (tplId, data) {
 };
 
 function tplRet (tplId, data) {
-	var tpl = doT.template($('#tpl_' + tplId).html());
+	var tpl = doT.template(tplGet(tplId));
 
 	if (!$.isArray(data)) {
 		data = [data];

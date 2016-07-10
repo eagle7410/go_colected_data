@@ -1,0 +1,44 @@
+{{template "head"}}
+<body>
+	<div class="container">
+		<h2>Journal</h2>
+		<a href="record_add" class="btn btn-success pull-right"><i class="fa fa-plus-circle" aria-hidden="true"></i> Add record</a>
+
+		<table class="table">
+			<tbody></tbody>
+		</table>
+	</div>
+</body>
+{{template "postEnd"}}
+<script src="../../public/js/main.js"></script>
+</html>
+
+<script type="text/plain" id="tpl_item">
+<tr>
+	<th></th>
+	<th >Title</th>
+	<th >Login</th>
+	<th >Password</th>
+	<th >Answer</th>
+</tr>
+<tr data-id="{&= it.key &}">
+	<td >
+		  <div class="btn-group actions" role="group" aria-label="Basic example">
+			  <button type="button" class="btn btn-warning"><i class="fa fa-pencil" aria-hidden="true"></i> Edit</button>
+			  <button type="button" class="btn btn-danger"><i class="fa fa-trash-o" aria-hidden="true"></i> Delete</button>
+		  </div>
+	</td>
+	<td >{&= it.Name  &}</td>
+	<td >{&= it.Login &}</td>
+	<td >{&= it.Pass &}</td>
+	<td >{&= it.Answer &}</td>
+</tr >
+{&? it.Othen &}
+<tr id="{&= it.key &}Othen" >
+	<th>Othen</th>
+</tr>
+<tr>
+	<td colspan="5"><textarea class="form-control" rows="5" readonly>{&= it.Othen &}</textarea></td>
+</tr>
+{&?&}
+</script>

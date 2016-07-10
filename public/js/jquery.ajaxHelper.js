@@ -1,10 +1,19 @@
 
 (function ($) {
+	$.message = {
+		ok : function (m) {
+			swal("OK ", m, "success");
+		},
+		ajaxWarn : function (m) {
+			swal("Error ", m, "error");
+		}
+	};
+
 	/**
 	 * Вешаем обработчик на отправку формы через ajax
 	 * @param  {Object} options
 	 * @example
-	 * $('#form-ajax').ajaxFormSender ({
+	 * $('#form-ajax').ajaxFomessagermSender ({
 	 * 		url:          'http://...',             // адрес отправки (по умолчанию берется из формы или из options.action)
 	 * 		method:       'POST',                   // метод отправки (по умолчанию берется из формы или 'POST')
 	 * 		timeout:      15000,                    // 15 sec.
@@ -105,7 +114,148 @@
 		});
 	};
 
+	/**
+	 * "Умный" обработчик для линков
+	 *
+	 * @param  {Function} func
+	 */
+	$.fn.forceClick = function (func) {
+		if (typeof func !== 'function') {
+			throw new Error('Не указана функция - обработчик');
+		}
 
+		$('body').off('click', this.selector);
+		$('body').on('click', this.selector, function (event) {
+			event = event || window.event;
+			event.preventDefault();
+			func.call(this, event);
+			return false;
+		});
+		return this;
+	};
+
+	/**
+	 * "Умный" обработчик для указанных событий
+	 *
+	 * @param  {Function} func
+	 */
+	$.fn.forceEvent = function (event, func) {
+		if (typeof func !== 'function') {
+			throw new Error('Не указана функция - обработчик');
+		}
+
+		if (typeof event !== 'string' || !event.length) {
+			throw new Error('Не указано событие или событие не строка');
+		}
+
+		$('body').off(event, this.selector).on(event, this.selector, function (e) {
+			e = e || window.event;
+			e.preventDefault();
+			func.call(this, e);
+			return false;
+		});
+
+	};
+
+	/**
+	 * Простейшая загрузка элементов таблицы или списка (with doT.js)
+	 *
+	 * @param  {Object} options
+	 *
+	 * @example
+	 * $('table>body').listLoad ({
+	 * 		url:     'http://...',              // адрес отправки (options.url или window.baseUrl + '/' + options.target)
+	 * 		// или :
+	 * 		target:  'edit',                    // ajax-контроллер (для кабмина)
+	 * 		itemTpl: 'item',                    // шаблон doT.js
+	 * 		noitemsTpl: 'noitems',              // шаблон doT.js
+	 * 		timeout: 15000,                      // 15 sec.
+	 * 		success: function (result) {....},  // колбек на успешное выполнение (return true - закрыть окно)
+	 * 		error:   function (result) {....}   // колбек на ошибку в ответе сервера
+	 * });
+	 *
+	 */
+	$.fn.listLoad = function (options) {
+		var $this = $(this.selector);
+
+		options = $.extend({
+			target: $this.data('target') || '',
+			itemTpl: 'item',
+			data: {},
+			method: 'POST',
+			timeout: 15000,
+			success   : (function () {}),
+			error   : (ResFailed),
+			after: (function () {})
+		}, options);
+
+		if (!options.url && options.target) {
+			options.url =  (window.baseUrl ? window.baseUrl + '/' : '') + options.target;
+		}
+
+		$.ajax({
+			url     : options.url,
+			type    : options.method,
+			data    : options.data,
+			timeout : options.timeout,
+			success : function (result) {
+				var a = [];
+
+				if ($.isPlainObject(result)) {
+					var keys = Object.keys(result);
+
+					for (var i = 0, len = keys.length; i<len; ++i) {
+						var dt = result[keys[i]];
+
+						if ($.isPlainObject(dt)) {
+
+							if (!dt.key) {
+								dt.key = keys[i];
+							}
+
+						}
+
+						a.push(dt);
+
+					}
+
+					result.data = a;
+
+				}
+
+				if (Array.isArray(result.data) && result.data.length) {
+
+					$this.tpl(options.itemTpl, result.data);
+
+				} else {
+					if (options.noitemsTpl) {
+						$this.tpl(options.noitemsTpl);
+					} else {
+						$this.tpl(options.itemTpl, []);
+					}
+				}
+
+				if (typeof options.success === 'function') {
+					options.success(result);
+				}
+
+				options.after(result);
+			},
+			error: function (result) {
+				if (usePagination) $pagination.text('');
+
+				if (options.noitemsTpl) {
+					$this.tpl(options.noitemsTpl);
+				}
+
+				if (typeof options.error === 'function') {
+					options.error(result);
+				}
+
+				options.after(result);
+			}
+		});
+	};
 
 	/**
 	 * Вешаем обработчик на кнопки действий в таблице
@@ -187,296 +337,6 @@
 
 			if (settings.url && settings.check(data, $this, settings)) {
 				settings.ok();
-			}
-		});
-	};
-
-	/**
-	 * "Умный" обработчик для линков
-	 *
-	 * @param  {Function} func
-	 */
-	$.fn.forceClick = function (func) {
-		if (typeof func !== 'function') {
-			throw new Error('Не указана функция - обработчик');
-		}
-
-		$('body').off('click', this.selector);
-		$('body').on('click', this.selector, function (event) {
-			event = event || window.event;
-			event.preventDefault();
-			func.call(this, event);
-			return false;
-		});
-		return this;
-	};
-
-	/**
-	 * "Умный" обработчик для указанных событий
-	 *
-	 * @param  {Function} func
-	 */
-	$.fn.forceEvent = function (event, func) {
-		if (typeof func !== 'function') {
-			throw new Error('Не указана функция - обработчик');
-		}
-
-		if (typeof event !== 'string' || !event.length) {
-			throw new Error('Не указано событие или событие не строка');
-		}
-
-		$('body').off(event, this.selector).on(event, this.selector, function (e) {
-			e = e || window.event;
-			e.preventDefault();
-			func.call(this, e);
-			return false;
-		});
-
-	};
-
-	/**
-	 * Простейшая загрузка элементов таблицы или списка (with doT.js)
-	 *
-	 * @param  {Object} options
-	 *
-	 * @example
-	 * $('table>body').listLoad ({
-	 * 		url:     'http://...',              // адрес отправки (options.url или window.baseUrl + '/' + options.target)
-	 * 		// или :
-	 * 		target:  'edit',                    // ajax-контроллер (для кабмина)
-	 * 		itemTpl: 'item',                    // шаблон doT.js
-	 * 		noitemsTpl: 'noitems',              // шаблон doT.js
-	 * 		timeout: 15000,                      // 15 sec.
-	 * 		success: function (result) {....},  // колбек на успешное выполнение (return true - закрыть окно)
-	 * 		error:   function (result) {....}   // колбек на ошибку в ответе сервера
-	 * });
-	 *
-	 */
-	$.fn.listLoad = function (options) {
-		var $this = $(this.selector);
-		var $total = $this.parent('table').find('tfoot');
-		var usePagination = false;
-		var usePages = false;
-		options = $.extend({
-			target: $this.data('target') || '',
-			itemTpl: 'item',
-			data: {},
-			method: 'GET',
-			timeout: 15000,
-			success   : (function () {}),
-			error   : (ResFailed),
-			after: (function () {})
-		}, options);
-
-		if (!options.url && options.target) {
-			options.url =  (window.baseUrl ? window.baseUrl + '/' : '') + options.target;
-		}
-
-		if (options.pagination) {
-
-			if (options.pagination.selector) {
-
-				var $pagination = $(options.pagination.selector);
-
-				if ($pagination.length) {
-
-					usePagination = true;
-					var skip = $pagination.attr('skip') ? $pagination.attr('skip') : options.pagination.skip ? options.pagination.skip : 0;
-					var limit;
-					$pagination.attr('loading', 'true').html('<i class="fa fa-refresh fa-spin"></i>');
-
-					if (options.pagination.pages) {
-						$pagination.attr('pages', 'true');
-						var btnSee = options.pagination.btnCount ? options.pagination.btnCount : 3 ;
-						limit = options.pagination.pages;
-						usePages = true;
-					} else {
-						options.data.skip = skip;
-						limit = options.pagination.limit ? options.pagination.limit : 25;
-					}
-
-					options.data.limit = limit;
-				} else {
-					console.log('[listLoad][pagination]Not found element by selector');
-				}
-
-			} else {
-				console.log('[listLoad][pagination]Not found selector');
-			}
-		}
-
-		if (options.total) {
-			$total.html('');
-		}
-
-		$.ajax({
-			url     : options.url,
-			type    : options.method,
-			data    : options.data,
-			timeout : options.timeout,
-			success : function (result) {
-				if (usePagination) $pagination.text('');
-
-				if (Array.isArray(result.data) && result.data.length) {
-					if (usePagination) {
-						var count = result.countPagination;
-
-						if (usePages) {
-							if (count > limit) {
-								var countPages = ~~(count / limit);
-								var activePage = options.data.skip ? options.data.skip / limit + 1 : 1;
-								var ul = '<ul class="pagination">';
-								countPages += count % limit > 0 ? 1 : 0;
-								var i;
-								var liAdd = function (n) {
-									var cl = n === activePage ? 'active' : '';
-									ul += '<li class="' + cl + '"><a href="" page="' + n + '" class="page" >' + n + '</a></li>';
-								};
-
-								if (countPages > btnSee) {
-									var start = activePage - 1;
-									start = start ? start : 1;
-
-									var end = start + btnSee;
-									var top = countPages - 1;
-									var more = false;
-
-									if (end > top) {
-										end = top;
-										more = true;
-									}
-
-									if (start > 1 ) {
-										liAdd(1);
-									}
-
-									if (start > 2 ) {
-										liAdd('...');
-									}
-
-									for (i = start > top - btnSee + 2 ? top - btnSee + 2 : start ; i < end; ++i) {
-										liAdd(i);
-									}
-
-									if (end < countPages) {
-
-										if (top <= end) {
-											if (more) {
-												liAdd(top);
-											} else {
-												liAdd('...');
-											}
-
-										} else if (top > end) {
-											liAdd('...');
-										}
-
-										liAdd(countPages);
-									} else if (end === countPages) {
-										liAdd(end);
-									}
-
-								} else {
-									for (i = 1; i <= countPages; ++i) {
-										liAdd(i);
-									}
-								}
-
-								ul += '</ul>';
-								$pagination.html(ul);
-								$('.page').forceClick(function () {
-									var page = parseInt($(this).attr('page'));
-
-									if (!isNaN(page)) {
-										--page;
-										options.data.skip = page > 0 ? page * limit : 0;
-										$this.listLoad(options);
-									}
-
-								});
-
-							}
-							$this.tpl(options.itemTpl, result.data);
-						} else {
-							$this.tplAppend(options.itemTpl, result.data);
-							var curSkip = parseInt(skip) + parseInt(limit);
-							skip = curSkip >= count ? count : curSkip;
-							var getCount = (count - skip) > limit ? limit : (count - skip);
-
-							if (getCount) {
-								$pagination.attr({
-									count   : count,
-									skip    : skip,
-									loading : false
-								}).text('Еще ' + getCount + ' (' + skip + '/' + count + ')').forceClick(function () {
-									$this.listLoad(options);
-								});
-							} else {
-								$pagination.hide();
-							}
-						}
-					} else {
-						$this.tpl(options.itemTpl, result.data);
-					}
-
-				} else {
-					if (options.noitemsTpl) {
-						$this.tpl(options.noitemsTpl);
-					} else {
-						$this.tpl(options.itemTpl, []);
-					}
-				}
-
-				if (options.total && options.total.tpl) {
-					var max = function (d, t) {
-						d = d || 0;
-						t = t || 0;
-						return (d > t) ? d : t;
-					};
-
-					var sum = function (d, t) {
-						return Number((t || 0).toFixed(2)) + Number((d || 0).toFixed(2));
-					};
-
-					var total = {};
-					result.data.forEach(function (it) {
-						options.total.fields.forEach(function (field) {
-							var props = field.name.split('.');
-							var d = it;
-							props.forEach(function (p) {
-								d = d[p];
-							});
-							var method = (field.method && field.method === 'max') ? field.method :	'sum';
-							total[field.name.replace('.', '_')] =
-								eval(method + '(' + d + ', ' + total[field.name.replace('.', '_')] + ')');
-						});
-					});
-
-					$total.tpl(options.total.tpl, total);
-				}
-
-				if (typeof options.success === 'function') {
-					options.success(result);
-				}
-
-				options.after(result);
-			},
-			error: function (result) {
-				if (usePagination) $pagination.text('');
-
-				if (options.total) {
-					$total.html('');
-				}
-
-				if (options.noitemsTpl) {
-					$this.tpl(options.noitemsTpl);
-				}
-
-				if (typeof options.error === 'function') {
-					options.error(result);
-				}
-
-				options.after(result);
 			}
 		});
 	};

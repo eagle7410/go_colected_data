@@ -2,10 +2,11 @@ package main
 
 import (
 	"github.com/gin-gonic/contrib/renders/multitemplate"
+//	"github.com/gin-gonic/gin/binding"
 	"github.com/gin-gonic/gin"
 	"path/filepath"
+	"html/template"
 	"io/ioutil"
-	//"net/http"
 	"strconv"
 	"strings"
 	"bytes"
@@ -13,9 +14,14 @@ import (
 	"os"
 )
 
+type LoginForm struct {
+	Password string `form:"password" binding:"required"`
+}
+
 type (
 	appParams struct {
 		port string
+		auth, tryAuth bool
 	}
 
 	Record struct {
@@ -24,7 +30,7 @@ type (
 	Data struct {
 		pass     string
 		passCode []int
-		Data     map[int]Record
+		Data     map[string]Record
 		Count    int
 	}
 )
@@ -47,7 +53,7 @@ func toPass (val *string) (string, []int) {
 			n /= 2
 			c = append(c, n)
 			char := fmt.Sprintf("%q", n)
-			s += char
+			s += strings.Replace(char, "'", "", -1)
 		}
 
 	}
@@ -56,7 +62,7 @@ func toPass (val *string) (string, []int) {
 }
 
 func (ins *Data) toWord (val *string) string {
-	s:= ""
+	s := ""
 	passCount := 0
 	buf := strings.Split(*val, "#")
 
@@ -71,19 +77,20 @@ func (ins *Data) toWord (val *string) string {
 		if n > 0 {
 			n -= ins.passCode[passCount]
 			char := fmt.Sprintf("%q", n)
-			s += char
+			s += strings.Replace(char, "'", "", -1)
+
 		}
 
 		passCount++
 	}
 
-	return s
+	return strings.Replace(s, "\\r\\n", "\r\n", -1)
 }
 
 func (ins *Data) init (data *[]string) {
 	var count byte
 	rec := Record{}
-	ins.Data = make(map[int]Record)
+	ins.Data = make(map[string]Record)
 	for inx, val := range *data {
 
 		if inx == 0 {
@@ -105,7 +112,7 @@ func (ins *Data) init (data *[]string) {
 			} else if count == 5 {
 				rec.Othen  = ins.toWord(&word)
 				count = 0
-				ins.Data[ins.Count] = rec
+				ins.Data[strconv.Itoa(ins.Count)] = rec
 				ins.Count++
 			}
 
@@ -113,6 +120,80 @@ func (ins *Data) init (data *[]string) {
 
 	}
 
+}
+
+func main() {
+
+//	fmt.Println("data", data)
+
+	if !OK {
+		return
+	}
+
+	r := gin.Default()
+
+	// Static
+	r.Static("/public", "./public")
+
+	// render
+	r.HTMLRender = loadTemplates("./tpl")
+
+	// Handel routs
+
+
+	r.GET("/", func (c *gin.Context) {
+		c.HTML(200, "login.html", gin.H{ "name" : "Qwerty"})
+	})
+
+	r.POST("/", func (c *gin.Context) {
+
+		var form LoginForm
+
+		if c.Bind(&form) == nil {
+			if form.Password == data.pass {
+				p.auth = true
+				c.Redirect(302, "/index")
+
+				r.GET("/index", func (c *gin.Context) {
+					c.HTML(200, "index.html", gin.H{})
+				})
+
+				r.GET("/record_add", func (c *gin.Context) {
+					c.HTML(200, "record_add.html", gin.H{})
+				})
+
+				r.GET("/404", func (c *gin.Context) {
+
+				})
+
+				r.POST("/index", func (c *gin.Context) {
+					c.JSON(200, data.Data)
+				})
+
+			} else {
+				c.HTML(200, "login.html", gin.H{"Message" : "Invalid value"})
+			}
+		} else {
+			c.HTML(200, "login.html", gin.H{"Message" : "Invalid value"})
+		}
+
+	})
+
+	r.Use(Logger());
+
+	r.NoRoute(func(c *gin.Context) {
+		c.HTML(404, "404.html", gin.H{})
+	})
+
+	r.Run(":" + p.port) // listen and server on 0.0.0.0:8080
+}
+
+func Logger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !p.auth {
+			c.Redirect(302, "/")
+		}
+	}
 }
 
 func Default () {
@@ -148,50 +229,25 @@ func init() {
 	DataInit()
 }
 
-func Render() {
-
-}
-
-func main() {
-
-//	fmt.Println("data", data)
-
-	if !OK {
-		return
-	}
-
-	r := gin.New()
-
-	// Static
-	r.Static("/public", "./public")
-
-	// render
-	//r.LoadHTMLGlob("tpl/*")
-	r.HTMLRender = createMyRender("def")
-
-
-	r.GET("/", func (c *gin.Context) {
-//		r.HTMLTemplates = template.Must(template.ParseFiles("templates/layout.html", "templates/home.html"))
-//		c.HTML(200, "index", gin.H{ "name" : "Qwerty"})
-
-	})
-
-	r.Run(":" + p.port) // listen and server on 0.0.0.0:8080
-}
-
-func createMyRender(layout string) multitemplate.Render {
+func loadTemplates(templatesDir string) multitemplate.Render {
 	r := multitemplate.New()
-	files, err := filepath.Glob("tpl/*.html")
 
+	layouts, err := filepath.Glob(templatesDir + "/layouts/*.html")
 	if err != nil {
 		panic(err.Error())
 	}
-	// ** https://github.com/gin-gonic/contrib/tree/master/renders/multitemplate
-	fmt.Println("tpl ->", files)
-	//r.AddFromFiles("index", "tpl/index.html", "tpl/layouts/" + layout +"/head.html","tpl/layouts/"+ layouts +"/postEnd.html")
-	//r.AddFromFiles("article", "base.html", "article.html")
-	//r.AddFromFiles("login", "base.html", "login.html")
-	//r.AddFromFiles("dashboard", "base.html", "dashboard.html")
 
+	includes, err := filepath.Glob(templatesDir + "/includes/*.html")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	for _, layout := range layouts {
+
+		filesSet := []string{layout}
+		filesSet = append(filesSet, includes...)
+
+		r.Add(filepath.Base(layout), template.Must(template.ParseFiles(filesSet...)))
+	}
 	return r
 }

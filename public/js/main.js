@@ -19,5 +19,8 @@ $(function (){
 			}
 		});
 	});
-
+	//swal("Cancelled", "Your imaginary file is safe :)", "error");
+	$('.table tbody').listLoad({
+		item : "item"
+	});
 });
