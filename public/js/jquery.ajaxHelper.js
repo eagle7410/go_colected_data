@@ -1,28 +1,16 @@
-
 (function ($) {
+	noop = function (){};
 	$.message = {
-		ok : function (m) {
-			swal("OK ", m, "success");
+		ok : function (m, aft) {
+			swal({ title: "OK", text: m, type: "success" }, aft || noop);
 		},
 		ajaxWarn : function (m) {
 			swal("Error ", m, "error");
+		},
+		cancel : function(m) {
+			swal("Cancelled ", m, "error");
 		}
 	};
-
-	/**
-	 * Вешаем обработчик на отправку формы через ajax
-	 * @param  {Object} options
-	 * @example
-	 * $('#form-ajax').ajaxFomessagermSender ({
-	 * 		url:          'http://...',             // адрес отправки (по умолчанию берется из формы или из options.action)
-	 * 		method:       'POST',                   // метод отправки (по умолчанию берется из формы или 'POST')
-	 * 		timeout:      15000,                    // 15 sec.
-	 * 		onBeforeSend: function () {....},       // выполнить что-то перед отправкой проверкой
-	 * 		check:        function () {....},       // колбек проверки (return true/false - успешность проверки)
-	 * 		success:      function (result) {....}, // колбек на успешное выполнение (return true - закрыть окно)
-	 * 		error:        function (result) {....}  // колбек на ошибку в ответе сервера
-	 * });
-	 */
 
 	window.ResFailed = function (r) {
 		var m = r && r.responseText ? r.responseText : null;
@@ -37,82 +25,6 @@
 			$.message.ajaxWarn(r.statusText || 'Ошибка');
 		}
 	}
-
-	$.fn.ajaxFormSender = function (options) {
-		options = options || {};
-
-		// Обработчик
-		$('body').off('submit', this.selector);
-		$('body').on('submit', this.selector, function (event) {
-			event = event || window.event;
-			event.preventDefault();
-
-			var $this = $(event.target);
-			var action = options.action || $this.attr('action') || '';
-			var settings = $.extend({
-				url         : ((window.baseUrl && action.indexOf('/') === -1) ? (window.baseUrl + '/') : '') + action,
-				method      : $this.attr('method') || 'POST',
-				timeout     : 15000,
-				json        : false,
-				onBeforeSend: (function () {}),
-				check       : (function () {return true;}),
-				success     : (function (result) {
-					$.message.ok(result.message);
-					return true;
-				}),
-				error       : (ResFailed),
-				after       : (function () {})
-			}, options);
-
-			var obj = {};
-
-			$this.serializeArray().forEach(function (el) {
-				if (typeof obj[el.name] === 'undefined' && el.name.indexOf('[]') === -1) {
-					obj[el.name] = el.value;
-				} else {
-					var name = el.name.replace('[]', '');
-
-					if (typeof obj[name] === 'undefined') {
-						obj[name] = [];
-					} else if (!Array.isArray(obj[name])) {
-						obj[name] = [obj[name]];
-					}
-
-					obj[name].push(el.value);
-				}
-			});
-
-			settings.onBeforeSend(obj, $this, settings);
-
-			var data = $.param(obj).replace(/%5B%5D=/g, '=');
-
-			settings.ok = function () {
-				$.ajax({
-					url    : settings.url,
-					type   : settings.method,
-					data   : settings.json ? {data: JSON.stringify(obj)} : data,
-					timeout: settings.timeout,
-					success: function (result) {
-						if (settings.success(result) && $.wbox) {
-							$.wbox.close();
-						}
-
-						settings.after(result);
-					},
-					error: function (result) {
-						settings.error(result);
-						settings.after(result);
-					}
-				});
-			};
-
-			if (settings.check(obj, $this, settings)) {
-				settings.ok();
-			}
-
-			return false;
-		});
-	};
 
 	/**
 	 * "Умный" обработчик для линков
@@ -257,88 +169,46 @@
 		});
 	};
 
-	/**
-	 * Вешаем обработчик на кнопки действий в таблице
-	 * (INFO: Вместо объекта опций можно передать ф-ю, отдающую этот объект)
-	 *
-	 * @param  {Object/Function} options
-	 * @example
-	 * $('table .status, table .remove, table .trash').ajaxActionSender ({
-	 * 		url:     'http://...',              // адрес отправки (options.url или window.baseUrl + '/' + options.target)
-	 * 		method:  'POST',                    // метод отправки (по умолчанию 'GET')
-	 * 		action:  'edit',                    // ajax-действие  (по умолчанию берется из data-action)
-	 * 		timeout: 15000,                      // 15 sec.
-	 * 		check:   function () {....},        // колбек проверки (return true/false - успешность проверки)
-	 * 		success: function (result) {....},  // колбек на успешное выполнение (return true - закрыть окно)
-	 * 		error:   function (result) {....}   // колбек на ошибку в ответе сервера
-	 * });
-	 */
-	$.fn.ajaxActionSender = function (options) {
+	$.send = function (ops, method) {
+		ops = $.extend({
+			target: location.pathname,
+			data: {},
+			timeout: 15000,
+			success   : (function () {}),
+			error   : (ResFailed),
+			before : (function () { return true}),
+			after: (function () {})
+		}, ops);
 
-		// Обработчик
-		$(this.selector).forceClick(function (event) {
-			var opt = {};
+		if (!ops.url && ops.target) {
+			ops.url =  (window.baseUrl ? window.baseUrl + '/' : '') + ops.target;
+		}
 
-			if (typeof options === 'function') {
-				opt = options.call(this, event);
-			} else {
-				opt = typeof options === 'object' ? options : {};
-			}
+		if (!ops.before(ops)){
+			return;
+		}
 
-			var $this = $(event.target);
-			var settings = $.extend({
-				action: $this.data('action') || 'edit',
-				data: {},
-				dataKeys: [],
-				dataId: 'id',
-				id: null,
-				method: 'GET',
-				remove: false,
-				timeout: 15000,
-				url: opt.target ? ((window.baseUrl ? window.baseUrl + '/' : '') + opt.target) : '',
-				check: (function () {return true;}),
-				success: (function (result) {$.message.ok(result.message);}),
-				error: (ResFailed),
-				after: (function () {})
-			}, opt);
-
-			var sel = settings.selector ? $this.closest(settings.selector) : (
-				settings.findSelector ? $this.find(settings.findSelector) : (
-					settings.thisSelector ? $this : $this.closest('tr')
-				)
-			);
-			var id = settings.id || sel.data(settings.dataId);
-
-			settings.dataKeys.forEach(function (el) {
-				if (sel.data(el)) {
-					settings.data[el] = sel.data(el);
-				}
-			});
-			var data = $.extend({action: settings.action, id: id}, settings.data);
-			settings.ok = function () {
-				$.ajax({
-					url     : settings.url,
-					type    : settings.method,
-					data    : data,
-					timeout : settings.timeout,
-					success : function (result) {
-						if (settings.success(result, $this, settings) || settings.remove) {
-							$this.closest('tr').hide().remove();
-						}
-
-						settings.after(result, $this);
-					},
-					error: function (result) {
-						settings.error(result, $this, settings);
-						settings.after(result);
-					}
-				});
-			};
-
-			if (settings.url && settings.check(data, $this, settings)) {
-				settings.ok();
+		$.ajax({
+			url     : ops.url,
+			type    : method,
+			data    : ops.data,
+			timeout : ops.timeout,
+			success : function (r) {
+				ops.success(r);
+				ops.after();
+			},
+			error : function(r) {
+				ops.error(r);
+				ops.after()
 			}
 		});
 	};
 
+	$.delete = function (ops) {
+		$.send(ops, 'DELETE');
+	};
+
+	$.put = function (ops) {
+		$.send(ops, 'PUT');
+	};
 })(jQuery);

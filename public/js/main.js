@@ -1,6 +1,9 @@
 $(function (){
-	console.log('START');
-	$(".actions .btn-danger").forceClick(function (){
+	$(".actions .btn-danger").forceClick(function (ev){
+		var $this = $(ev.target);
+		var $tr = $this.closest('tr');
+		var ID = $tr.data('id');
+
 		swal({
 			title: "Are you sure?",
 			text: "You will not be able to recover this imaginary file!",
@@ -13,14 +16,28 @@ $(function (){
 			closeOnCancel: false
 		}, function(isConfirm) {
 			if (isConfirm) {
-				swal("Deleted!", "Your imaginary file has been deleted.", "success");
+				$.delete({
+					target : 'index/' + ID,
+					success: function (r) {
+						var $other = $("#" + ID + 'Othen');
+
+						if ($other.length) {
+							$other.next().remove();
+							$other.remove();
+						}
+
+						$tr.prev().remove();
+						$tr.remove();
+
+						$.message.ok("Your imaginary file has been deleted.");
+					}
+				})
 			} else {
-				swal("Cancelled", "Your imaginary file is safe :)", "error");
+				$.message.cancel("Your imaginary file is safe :)");
 			}
 		});
 	});
-	//swal("Cancelled", "Your imaginary file is safe :)", "error");
-	$('.table tbody').listLoad({
-		item : "item"
-	});
+
+
+	$('.table tbody').listLoad();
 });

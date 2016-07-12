@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/gin-gonic/contrib/renders/multitemplate"
-//	"github.com/gin-gonic/gin/binding"
 	"github.com/gin-gonic/gin"
 	"path/filepath"
 	"html/template"
@@ -12,18 +11,17 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+//	"github.com/davecgh/go-spew/spew"
 )
 
-type LoginForm struct {
-	Password string `form:"password" binding:"required"`
-}
-
 type (
+	LoginForm struct {
+		Password string `form:"password" binding:"required"`
+	}
 	appParams struct {
 		port string
 		auth, tryAuth bool
 	}
-
 	Record struct {
 		Name, Login, Pass, Answer, Othen string
 	}
@@ -87,6 +85,59 @@ func (ins *Data) toWord (val *string) string {
 	return strings.Replace(s, "\\r\\n", "\r\n", -1)
 }
 
+func (ins *Data) encode (val *string) string {
+	r := ""
+	passCount := 0
+
+
+	for _, char := range *val {
+
+		if	passCount == len(ins.passCode) {
+			passCount = 0
+		}
+
+		intChar := int(char)
+
+		intChar += ins.passCode[passCount]
+
+		r += strconv.Itoa(intChar) + "#"
+
+		passCount++
+	}
+
+	return r
+}
+
+func (ins *Data) Save () error {
+	var toSave []string
+	var buf    string
+
+	//to save Pass
+
+	for _, code := range ins.passCode {
+		code *= 2;
+		buf += strconv.Itoa(code) + "#"
+	}
+
+	toSave = append(toSave, buf)
+
+	//to save Data
+
+	for _, rec := range ins.Data {
+
+		toSave = append(toSave, ins.encode(&rec.Name))
+		toSave = append(toSave, ins.encode(&rec.Login))
+		toSave = append(toSave, ins.encode(&rec.Pass))
+		toSave = append(toSave, ins.encode(&rec.Answer))
+		toSave = append(toSave, ins.encode(&rec.Othen))
+
+	}
+
+	err := ioutil.WriteFile("Data.sdf", []byte(strings.Join(toSave, "\r\n")), 0644)
+
+	return err;
+}
+
 func (ins *Data) init (data *[]string) {
 	var count byte
 	rec := Record{}
@@ -124,8 +175,6 @@ func (ins *Data) init (data *[]string) {
 
 func main() {
 
-//	fmt.Println("data", data)
-
 	if !OK {
 		return
 	}
@@ -159,15 +208,83 @@ func main() {
 				})
 
 				r.GET("/record_add", func (c *gin.Context) {
-					c.HTML(200, "record_add.html", gin.H{})
+					c.HTML(200, "record_add.html", gin.H{"action" : "create"})
 				})
 
-				r.GET("/404", func (c *gin.Context) {
+				r.GET("/record_edit/:ID", func (c *gin.Context) {
 
+					ID := c.Param("ID")
+
+					c.HTML(200, "record_add.html", gin.H{
+					"action" : "edit",
+					"ID"     : ID,
+					"data"   : data.Data[ID]})
+
+				})
+
+				r.POST("/record_edit/:ID", func (c *gin.Context) {
+
+					var formtRecord Record
+					ID := c.Param("ID")
+
+					if c.Bind(&formtRecord) == nil {
+						data.Data[ID] = formtRecord
+						err :=  data.Save()
+
+						if err == nil {
+							c.JSON(200, gin.H{})
+						} else {
+							fmt.Println("Save err -> ", err);
+							c.JSON(400, gin.H{"message" : "Error save"})
+						}
+					} else {
+						c.JSON(400, gin.H{"message" : "No data"})
+					}
+				})
+
+				r.PUT("/record_add", func (c *gin.Context) {
+					var formtRecord Record
+
+					if c.Bind(&formtRecord) == nil {
+						data.Data[strconv.Itoa(data.Count)] = formtRecord
+						err :=  data.Save()
+
+						if err == nil {
+							data.Count++
+							c.JSON(200, gin.H{})
+						} else {
+							fmt.Println("Save err -> ", err);
+							c.JSON(400, gin.H{"message" : "Error save"})
+						}
+
+					} else {
+						c.JSON(400, gin.H{"message" : "No data"})
+					}
+
+					fmt.Println("formtRecord", formtRecord)
 				})
 
 				r.POST("/index", func (c *gin.Context) {
 					c.JSON(200, data.Data)
+				})
+
+				r.DELETE("/index/:id", func (c *gin.Context) {
+
+					delete(data.Data, c.Param("id"))
+
+					err := data.Save()
+
+					if err == nil {
+						c.JSON(200, gin.H{})
+					} else {
+						fmt.Println("Save err -> ", err);
+						c.JSON(400, gin.H{"message" : "Error save"})
+					}
+
+				})
+
+				r.NoRoute(func(c *gin.Context) {
+					c.HTML(404, "404.html", gin.H{})
 				})
 
 			} else {
@@ -181,16 +298,12 @@ func main() {
 
 	r.Use(Logger());
 
-	r.NoRoute(func(c *gin.Context) {
-		c.HTML(404, "404.html", gin.H{})
-	})
-
 	r.Run(":" + p.port) // listen and server on 0.0.0.0:8080
 }
 
 func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if !p.auth {
+		if !p.auth  {
 			c.Redirect(302, "/")
 		}
 	}
