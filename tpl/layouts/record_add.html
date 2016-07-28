@@ -1,4 +1,4 @@
-{{template "head"}}
+{{template "head" .}}
 <body>
 <div class="container">
 	<h2>Journal record {{.action}}</h2>
@@ -29,6 +29,6 @@
 	</form>
 </div>
 </body>
-{{template "postEnd"}}
+{{template "postEnd" .}}
 <script src="../../public/js/{{.action}}.js"></script>
 </html>

@@ -19,7 +19,7 @@ type (
 		Password string `form:"password" binding:"required"`
 	}
 	appParams struct {
-		port string
+		port, grunt string
 		auth, tryAuth bool
 	}
 	Record struct {
@@ -191,7 +191,7 @@ func main() {
 
 
 	r.GET("/", func (c *gin.Context) {
-		c.HTML(200, "login.html", gin.H{ "name" : "Qwerty"})
+		c.HTML(200, "login.html", gin.H{ "name" : "Qwerty" , "grunt" : p.grunt })
 	})
 
 	r.POST("/", func (c *gin.Context) {
@@ -200,98 +200,105 @@ func main() {
 
 		if c.Bind(&form) == nil {
 			if form.Password == data.pass {
-				p.auth = true
+				if	!p.auth {
+
+					p.auth = true
+
+					r.GET("/index", func (c *gin.Context) {
+						c.HTML(200, "index.html", gin.H{ "grunt" : p.grunt })
+					})
+
+					r.GET("/record_add", func (c *gin.Context) {
+						c.HTML(200, "record_add.html", gin.H{"action" : "create", "grunt" : p.grunt})
+					})
+
+					r.GET("/record_edit/:ID", func (c *gin.Context) {
+
+						ID := c.Param("ID")
+
+						c.HTML(200, "record_add.html", gin.H{
+							"action" : "edit",
+							"ID"     : ID,
+							"data"   : data.Data[ID],
+							"grunt"  : p.grunt})
+
+					})
+
+					r.POST("/record_edit/:ID", func (c *gin.Context) {
+
+						var formtRecord Record
+						ID := c.Param("ID")
+
+						if c.Bind(&formtRecord) == nil {
+							data.Data[ID] = formtRecord
+							err :=  data.Save()
+
+							if err == nil {
+								c.JSON(200, gin.H{})
+							} else {
+								fmt.Println("Save err -> ", err);
+								c.JSON(400, gin.H{"message" : "Error save"})
+							}
+						} else {
+							c.JSON(400, gin.H{"message" : "No data"})
+						}
+					})
+
+					r.PUT("/record_add", func (c *gin.Context) {
+						var formtRecord Record
+
+						if c.Bind(&formtRecord) == nil {
+							data.Data[strconv.Itoa(data.Count)] = formtRecord
+							err :=  data.Save()
+
+							if err == nil {
+								data.Count++
+								c.JSON(200, gin.H{})
+							} else {
+								fmt.Println("Save err -> ", err);
+								c.JSON(400, gin.H{"message" : "Error save"})
+							}
+
+						} else {
+							c.JSON(400, gin.H{"message" : "No data"})
+						}
+
+						fmt.Println("formtRecord", formtRecord)
+					})
+
+					r.POST("/index", func (c *gin.Context) {
+						c.JSON(200, data.Data)
+					})
+
+					r.DELETE("/index/:id", func (c *gin.Context) {
+
+						delete(data.Data, c.Param("id"))
+
+						err := data.Save()
+
+						if err == nil {
+							c.JSON(200, gin.H{})
+						} else {
+							fmt.Println("Save err -> ", err);
+							c.JSON(400, gin.H{"message" : "Error save"})
+						}
+
+					})
+
+					r.NoRoute(func(c *gin.Context) {
+						c.HTML(404, "404.html", gin.H{"grunt" : p.grunt})
+					})
+				}
+
 				c.Redirect(302, "/index")
 
-				r.GET("/index", func (c *gin.Context) {
-					c.HTML(200, "index.html", gin.H{})
-				})
 
-				r.GET("/record_add", func (c *gin.Context) {
-					c.HTML(200, "record_add.html", gin.H{"action" : "create"})
-				})
-
-				r.GET("/record_edit/:ID", func (c *gin.Context) {
-
-					ID := c.Param("ID")
-
-					c.HTML(200, "record_add.html", gin.H{
-					"action" : "edit",
-					"ID"     : ID,
-					"data"   : data.Data[ID]})
-
-				})
-
-				r.POST("/record_edit/:ID", func (c *gin.Context) {
-
-					var formtRecord Record
-					ID := c.Param("ID")
-
-					if c.Bind(&formtRecord) == nil {
-						data.Data[ID] = formtRecord
-						err :=  data.Save()
-
-						if err == nil {
-							c.JSON(200, gin.H{})
-						} else {
-							fmt.Println("Save err -> ", err);
-							c.JSON(400, gin.H{"message" : "Error save"})
-						}
-					} else {
-						c.JSON(400, gin.H{"message" : "No data"})
-					}
-				})
-
-				r.PUT("/record_add", func (c *gin.Context) {
-					var formtRecord Record
-
-					if c.Bind(&formtRecord) == nil {
-						data.Data[strconv.Itoa(data.Count)] = formtRecord
-						err :=  data.Save()
-
-						if err == nil {
-							data.Count++
-							c.JSON(200, gin.H{})
-						} else {
-							fmt.Println("Save err -> ", err);
-							c.JSON(400, gin.H{"message" : "Error save"})
-						}
-
-					} else {
-						c.JSON(400, gin.H{"message" : "No data"})
-					}
-
-					fmt.Println("formtRecord", formtRecord)
-				})
-
-				r.POST("/index", func (c *gin.Context) {
-					c.JSON(200, data.Data)
-				})
-
-				r.DELETE("/index/:id", func (c *gin.Context) {
-
-					delete(data.Data, c.Param("id"))
-
-					err := data.Save()
-
-					if err == nil {
-						c.JSON(200, gin.H{})
-					} else {
-						fmt.Println("Save err -> ", err);
-						c.JSON(400, gin.H{"message" : "Error save"})
-					}
-
-				})
-
-				r.NoRoute(func(c *gin.Context) {
-					c.HTML(404, "404.html", gin.H{})
-				})
 
 			} else {
-				c.HTML(200, "login.html", gin.H{"Message" : "Invalid value"})
+				c.HTML(200, "login.html", gin.H{"Message" : "Invalid value", "grunt" : p.grunt})
 			}
 		} else {
-			c.HTML(200, "login.html", gin.H{"Message" : "Invalid value"})
+			c.HTML(200, "login.html", gin.H{"Message" : "Invalid value", "grunt" : p.grunt})
 		}
 
 	})
@@ -313,9 +320,14 @@ func Default () {
 
 	p = appParams{}
 	p.port = os.Getenv("port")
+	p.grunt = os.Getenv("grunt")
 
 	if p.port == "" {
 		p.port = "8080"
+	}
+
+	if p.grunt == "" {
+		p.grunt = "y"
 	}
 
 }
