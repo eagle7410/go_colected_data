@@ -2,13 +2,15 @@
 <body>
 	<div class="container">
 		<h2>Journal</h2>
-		<div class="form-group has-feedback">
-			<label for="search" class="sr-only">Search</label>
-			<input type="text" class="form-control" name="search" id="search" placeholder="search">
-			<span class="glyphicon glyphicon-search form-control-feedback"></span>
+		<div class="row">
+			<div class="col-lg-2">
+				<a href="record_add" class="btn btn-success pull-right"><i class="fa fa-plus-circle" aria-hidden="true"></i> Add record</a>
+			</div>
+			<div class="col-lg-3">
+				<input type="text" class="form-control" id="search" placeholder="search">
+			</div>
 		</div>
-		<a href="record_add" class="btn btn-success pull-right"><i class="fa fa-plus-circle" aria-hidden="true"></i> Add record</a>
-
+		<br/>
 		<table class="table">
 			<tbody></tbody>
 		</table>
@@ -33,7 +35,7 @@
 			  <button type="button" class="btn btn-danger"><i class="fa fa-trash-o" aria-hidden="true"></i> Delete</button>
 		  </div>
 	</td>
-	<td >{&= it.Name  &}</td>
+	<td class="names">{&= it.Name  &}</td>
 	<td >{&= it.Login &}</td>
 	<td >{&= it.Pass &}</td>
 	<td >{&= it.Answer &}</td>

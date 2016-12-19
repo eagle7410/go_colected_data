@@ -191,21 +191,24 @@ func main() {
 
 
 	r.GET("/", func (c *gin.Context) {
+		//BACk
+		c.Redirect(302, "/index");
 		c.HTML(200, "login.html", gin.H{ "name" : "Qwerty" , "grunt" : p.grunt })
 	})
 
-	r.POST("/", func (c *gin.Context) {
+//	r.POST("/", func (c *gin.Context) {
 
-		var form LoginForm
+//		var form LoginForm
 
-		if c.Bind(&form) == nil {
-			if form.Password == data.pass {
-				if	!p.auth {
+//		if c.Bind(&form) == nil {
+//			if form.Password == data.pass {
+//				if	!p.auth {
 
 					p.auth = true
 
 					r.GET("/index", func (c *gin.Context) {
-						c.HTML(200, "index.html", gin.H{ "grunt" : p.grunt })
+//						c.HTML(200, "index.html", gin.H{ "grunt" : p.grunt })
+						c.HTML(200, "index.html", gin.H{ "grunt" : "M" })
 					})
 
 					r.GET("/record_add", func (c *gin.Context) {
@@ -288,20 +291,18 @@ func main() {
 					r.NoRoute(func(c *gin.Context) {
 						c.HTML(404, "404.html", gin.H{"grunt" : p.grunt})
 					})
-				}
+//				}
 
-				c.Redirect(302, "/index")
+//				c.Redirect(302, "/index")
 
+//			} else {
+//				c.HTML(200, "login.html", gin.H{"Message" : "Invalid value", "grunt" : p.grunt})
+//			}
+//		} else {
+//			c.HTML(200, "login.html", gin.H{"Message" : "Invalid value", "grunt" : p.grunt})
+//		}
 
-
-			} else {
-				c.HTML(200, "login.html", gin.H{"Message" : "Invalid value", "grunt" : p.grunt})
-			}
-		} else {
-			c.HTML(200, "login.html", gin.H{"Message" : "Invalid value", "grunt" : p.grunt})
-		}
-
-	})
+//	})
 
 	r.Use(Logger());
 

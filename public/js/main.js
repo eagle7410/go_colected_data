@@ -40,4 +40,55 @@ $(function (){
 
 
 	$('.table tbody').listLoad();
+
+	function ChangeShowRow($name, isHide)
+	{
+		isHide = isHide || false;
+
+		var $tr = $name.closest('tr');
+		var $othen = $('#' + $tr.data('id') + 'Othen');
+
+		if (isHide)
+		{
+			$tr.hide();
+			$tr.prev().hide();
+
+			if (!$othen.length)
+				return;
+
+			$othen.hide();
+			$othen.next().hide();
+		} else {
+			$tr.show();
+			$tr.prev().show();
+
+			if (!$othen.length)
+				return;
+
+			$othen.show();
+			$othen.next().show();
+		}
+	}
+	$('#search').change(function() {
+		var $el = $(this);
+		var t = $el.val();
+		var $arS = $('.names');
+
+		$arS.each(function(){
+			var $s =$(this);
+			var st =$s.text();
+
+			if (t == '') {
+				ChangeShowRow($s);
+				return;
+			}
+
+			if (~st.indexOf(t)){
+				ChangeShowRow($s);
+				return;
+			}
+
+			ChangeShowRow($s, true);
+		})
+	});
 });
