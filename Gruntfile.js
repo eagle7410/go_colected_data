@@ -44,18 +44,6 @@ module.exports = function(grunt) {
 				}
 			}
 		},
-		//less: {
-		//	style: {
-		//		files: {
-		//			"./public/assets/css/style.less": "./public/assets/css/style.css"
-		//		}
-		//	},
-		//	login: {
-		//		files: {
-		//			"./public/assets/css/login.less": "./public/assets/css/login.css"
-		//		}
-		//	}
-		//},
 		cssmin: {
 			style: {
 				files: {
