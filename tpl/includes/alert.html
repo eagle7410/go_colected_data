@@ -1,0 +1,17 @@
+{{define "alert"}}
+	{{if .alert}}
+		{{if eq .alert "error"}}
+		<div class="alert alert-danger">
+			<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+			<b>Danger!</b>{{.mess}}</a>.
+		</div>
+		{{end}}
+
+		{{if eq .alert "success"}}
+		<div class="alert alert-success">
+			<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+			<b>Success!</b>{{.mess}}</a>.
+		</div>
+		{{end}}
+	{{end}}
+{{end}}

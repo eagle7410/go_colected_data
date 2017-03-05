@@ -1,5 +1,6 @@
-$(function (){
-	$(".actions .btn-danger").forceClick(function (ev){
+"use strict";
+{
+	$(".actions .btn-danger").forceClick(ev => {
 		var $this = $(ev.target);
 		var $tr = $this.closest('tr');
 		var ID = $tr.data('id');
@@ -13,12 +14,12 @@ $(function (){
 			confirmButtonText: "Yes, delete it!",
 			cancelButtonText: "No, cancel plx!",
 			closeOnConfirm: false,
-			closeOnCancel: false
-		}, function(isConfirm) {
+			closeOnCancel: true
+		}, isConfirm => {
 			if (isConfirm) {
 				$.delete({
 					target : 'index/' + ID,
-					success: function (r) {
+					success: () => {
 						var $other = $("#" + ID + 'Othen');
 
 						if ($other.length) {
@@ -32,23 +33,17 @@ $(function (){
 						$.message.ok("Your imaginary file has been deleted.");
 					}
 				})
-			} else {
+			} else
 				$.message.cancel("Your imaginary file is safe :)");
-			}
 		});
 	});
 
 
 	$('.table tbody').listLoad();
 
-	function ChangeShowRow($name, isHide)
-	{
-		isHide = isHide || false;
+	let ChangeShowRow = ($tr, $othen, isHide) => {
 
-		var $tr = $name.closest('tr');
-		var $othen = $('#' + $tr.data('id') + 'Othen');
-
-		if (isHide)
+		if (isHide || false)
 		{
 			$tr.hide();
 			$tr.prev().hide();
@@ -68,27 +63,19 @@ $(function (){
 			$othen.show();
 			$othen.next().show();
 		}
-	}
-	$('#search').change(function() {
-		var $el = $(this);
-		var t = $el.val();
-		var $arS = $('.names');
+	};
 
-		$arS.each(function(){
-			var $s =$(this);
-			var st =$s.text();
+	$('#search').keyup(ev => {
+		let t = $(ev.target).val().toLowerCase();
 
-			if (t == '') {
-				ChangeShowRow($s);
-				return;
-			}
+		$('.names').each((i,that) => {
+			let $title = $(that);
+			let $login = $title.next();
+			let $tr = $title.closest('tr');
+			let $othen = $('#' + $tr.data('id') + 'Othen');
+			let search = [$othen.text(), $title.text(), $login.text()].join(' ');
 
-			if (~st.indexOf(t)){
-				ChangeShowRow($s);
-				return;
-			}
-
-			ChangeShowRow($s, true);
-		})
+			ChangeShowRow($tr, $othen, !((t == '') || (~search.toLowerCase().indexOf(t))));
+		});
 	});
-});
+}

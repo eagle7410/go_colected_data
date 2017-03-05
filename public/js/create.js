@@ -1,28 +1,25 @@
 /**
  * Created by igor on 12.07.16.
  */
-$(function (){
-	$('#save').forceClick(function () {
+"use strict";
+{
+	$('#save').forceClick(() => {
 
-		var $form = $('#CreateEdit');
+		let $form = $('#CreateEdit');
 
 		if ($form[0].checkValidity()) {
 			$.put({
 				data : $form.serialize(),
-				success : function () {
-					$.message.ok('It saved', function() {
+				success : r => {
+					$.message.ok('It saved', () => {
 						location.href="/index";
 					});
 				}
 			});
-		} else {
-			if (typeof $form[0].reportValidity === 'function') {
-				$form[0].reportValidity()
-			} else {
-				$.message.cancel('Data not correct');
-			}
-
-		}
+		} else
+			(typeof $form[0].reportValidity === 'function')
+				? $form[0].reportValidity()
+				: $.message.cancel('Data not correct');
 
 	});
-});
+}

@@ -1,14 +1,15 @@
 /**
  * Created by igor on 12.07.16.
  */
-$(function (){
-	$('#save').forceClick(function () {
+"use strict";
+{
+	$('#save').forceClick(() => {
 
 		var $form = $('#CreateEdit');
 
 		if ($form[0].checkValidity()) {
-			$.post(location.href, $form.serialize()).fail(ResFailed).done(function () {
-				$.message.ok('Change saved', function () {
+			$.post(location.href, $form.serialize()).fail(ResFailed).done(() => {
+				$.message.ok('Change saved', () => {
 					location.href = '/index';
 				})
 			})
@@ -22,4 +23,4 @@ $(function (){
 		}
 
 	});
-});
+}

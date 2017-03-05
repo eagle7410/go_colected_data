@@ -11,7 +11,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-//	"github.com/davecgh/go-spew/spew"
+	//"github.com/davecgh/go-spew/spew"
 )
 
 type (
@@ -121,16 +121,13 @@ func (ins *Data) Save () error {
 
 	toSave = append(toSave, buf)
 
-	//to save Data
 
 	for _, rec := range ins.Data {
-
 		toSave = append(toSave, ins.encode(&rec.Name))
 		toSave = append(toSave, ins.encode(&rec.Login))
 		toSave = append(toSave, ins.encode(&rec.Pass))
 		toSave = append(toSave, ins.encode(&rec.Answer))
 		toSave = append(toSave, ins.encode(&rec.Othen))
-
 	}
 
 	err := ioutil.WriteFile("Data.sdf", []byte(strings.Join(toSave, "\r\n")), 0644)
@@ -173,6 +170,25 @@ func (ins *Data) init (data *[]string) {
 
 }
 
+func (ins *Data) addRow(rec *Record) {
+	for _, row := range ins.Data {
+		if row.Name == rec.Name && row.Login == rec.Login && row.Pass == rec.Pass {
+			return
+		}
+	}
+
+	ins.Data[strconv.Itoa(ins.Count)] = *rec
+	ins.Count++
+}
+
+func (ins *Data) merge (merge *Data) {
+
+	for _, rec := range merge.Data {
+		ins.addRow(&rec)
+	}
+
+}
+
 func main() {
 
 	if !OK {
@@ -189,124 +205,162 @@ func main() {
 
 	// Handel routs
 
-
 	r.GET("/", func (c *gin.Context) {
-		//BACk
-		c.Redirect(302, "/index");
 		c.HTML(200, "login.html", gin.H{ "name" : "Qwerty" , "grunt" : p.grunt })
 	})
 
-//	r.POST("/", func (c *gin.Context) {
+	r.POST("/", func (c *gin.Context) {
 
-//		var form LoginForm
+		var form LoginForm
 
-//		if c.Bind(&form) == nil {
-//			if form.Password == data.pass {
-//				if	!p.auth {
+		if c.Bind(&form) == nil  || form.Password == data.pass {
+			if	!p.auth {
+				p.auth = true
+				c.Redirect(302, "/index")
+				routesAfterLogin(r);
+			}
+			return
+		}
 
-					p.auth = true
+		c.HTML(200, "login.html", gin.H{"Message" : "Invalid value", "grunt" : p.grunt})
 
-					r.GET("/index", func (c *gin.Context) {
-//						c.HTML(200, "index.html", gin.H{ "grunt" : p.grunt })
-						c.HTML(200, "index.html", gin.H{ "grunt" : "M" })
-					})
-
-					r.GET("/record_add", func (c *gin.Context) {
-						c.HTML(200, "record_add.html", gin.H{"action" : "create", "grunt" : p.grunt})
-					})
-
-					r.GET("/record_edit/:ID", func (c *gin.Context) {
-
-						ID := c.Param("ID")
-
-						c.HTML(200, "record_add.html", gin.H{
-							"action" : "edit",
-							"ID"     : ID,
-							"data"   : data.Data[ID],
-							"grunt"  : p.grunt})
-
-					})
-
-					r.POST("/record_edit/:ID", func (c *gin.Context) {
-
-						var formtRecord Record
-						ID := c.Param("ID")
-
-						if c.Bind(&formtRecord) == nil {
-							data.Data[ID] = formtRecord
-							err :=  data.Save()
-
-							if err == nil {
-								c.JSON(200, gin.H{})
-							} else {
-								fmt.Println("Save err -> ", err);
-								c.JSON(400, gin.H{"message" : "Error save"})
-							}
-						} else {
-							c.JSON(400, gin.H{"message" : "No data"})
-						}
-					})
-
-					r.PUT("/record_add", func (c *gin.Context) {
-						var formtRecord Record
-
-						if c.Bind(&formtRecord) == nil {
-							data.Data[strconv.Itoa(data.Count)] = formtRecord
-							err :=  data.Save()
-
-							if err == nil {
-								data.Count++
-								c.JSON(200, gin.H{})
-							} else {
-								fmt.Println("Save err -> ", err);
-								c.JSON(400, gin.H{"message" : "Error save"})
-							}
-
-						} else {
-							c.JSON(400, gin.H{"message" : "No data"})
-						}
-
-						fmt.Println("formtRecord", formtRecord)
-					})
-
-					r.POST("/index", func (c *gin.Context) {
-						c.JSON(200, data.Data)
-					})
-
-					r.DELETE("/index/:id", func (c *gin.Context) {
-
-						delete(data.Data, c.Param("id"))
-
-						err := data.Save()
-
-						if err == nil {
-							c.JSON(200, gin.H{})
-						} else {
-							fmt.Println("Save err -> ", err);
-							c.JSON(400, gin.H{"message" : "Error save"})
-						}
-
-					})
-
-					r.NoRoute(func(c *gin.Context) {
-						c.HTML(404, "404.html", gin.H{"grunt" : p.grunt})
-					})
-//				}
-
-//				c.Redirect(302, "/index")
-
-//			} else {
-//				c.HTML(200, "login.html", gin.H{"Message" : "Invalid value", "grunt" : p.grunt})
-//			}
-//		} else {
-//			c.HTML(200, "login.html", gin.H{"Message" : "Invalid value", "grunt" : p.grunt})
-//		}
-
-//	})
+	})
 
 	r.Use(Logger());
 
 	r.Run(":" + p.port) // listen and server on 0.0.0.0:8080
+}
+
+func routesAfterLogin(r *gin.Engine)  {
+
+	r.GET("/index", func (c *gin.Context) {
+		c.HTML(200, "index.html", gin.H{ "grunt" : p.grunt })
+	})
+
+	r.POST("/index", func (c *gin.Context) {
+		c.JSON(200, data.Data)
+	})
+
+	r.DELETE("/index/:id", func (c *gin.Context) {
+
+		delete(data.Data, c.Param("id"))
+
+		err := data.Save()
+
+		if err == nil {
+			c.JSON(200, gin.H{})
+		} else {
+			fmt.Println("Save err -> ", err);
+			c.JSON(400, gin.H{"message" : "Error save"})
+		}
+
+	})
+
+	r.GET("/record_edit/:ID", func (c *gin.Context) {
+
+		ID := c.Param("ID")
+
+		c.HTML(200, "record_add.html", gin.H{
+			"action" : "edit",
+			"ID"     : ID,
+			"data"   : data.Data[ID],
+			"grunt"  : p.grunt})
+	})
+
+	r.POST("/record_edit/:ID", func (c *gin.Context) {
+
+		var formRecord Record
+		ID := c.Param("ID")
+
+		if c.Bind(&formRecord) == nil {
+			data.Data[ID] = formRecord
+			err :=  data.Save()
+
+			if err == nil {
+				c.JSON(200, gin.H{})
+			} else {
+				fmt.Println("Save err -> ", err);
+				c.JSON(400, gin.H{"message" : "Error save"})
+			}
+		} else {
+			c.JSON(400, gin.H{"message" : "No data"})
+		}
+	})
+
+	r.GET("/record_add", func (c *gin.Context) {
+		c.HTML(200, "record_add.html", gin.H{"action" : "create", "grunt" : p.grunt})
+	})
+
+	r.PUT("/record_add", func (c *gin.Context) {
+		var formRecord Record
+
+		if c.Bind(&formRecord) == nil {
+			//to save Data
+			data.Data[strconv.Itoa(data.Count)] = formRecord
+			err :=  data.Save()
+
+			if err == nil {
+				data.Count++
+				c.JSON(200, gin.H{})
+			} else {
+				fmt.Println("Save err -> ", err);
+				c.JSON(400, gin.H{"message" : "Error save"})
+			}
+
+		} else {
+			c.JSON(400, gin.H{"message" : "No data"})
+		}
+
+	})
+
+	r.GET("/merge_data", func(c *gin.Context) {
+		c.HTML(200, "merge_data.html", gin.H{
+			"action": "merge",
+			"grunt" : p.grunt})
+	})
+
+	r.GET("/merge_data_result/:status/:mess", func(c *gin.Context) {
+		c.HTML(200, "merge_data.html", gin.H{
+			"action": "merge",
+			"alert" : c.Param("status"),
+			"mess"  : c.Param("mess"),
+			"grunt" : p.grunt})
+	})
+
+	r.POST("/merge_data", func(c *gin.Context){
+		file, _ , err := c.Request.FormFile("file")
+
+		if file == nil {
+			fmt.Println("Error get file -> ", err);
+			c.Redirect(302, "/merge_data_result/error/Bad_file");
+			return
+		}
+
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(file)
+		dataArr := strings.Split( buf.String(), "\r\n" )
+
+		var extend Data
+
+		extend.init(&dataArr)
+
+		data.merge(&extend)
+
+		err = data.Save()
+
+		if err != nil {
+			fmt.Println("Error save file -> ", err);
+			c.Redirect(302, "/merge_data_result/error/Bad_save")
+			return
+		}
+
+		c.Redirect(302, "/merge_data_result/success/ok")
+
+	})
+
+	r.NoRoute(func(c *gin.Context) {
+		c.HTML(404, "404.html", gin.H{"grunt" : p.grunt})
+	})
 }
 
 func Logger() gin.HandlerFunc {

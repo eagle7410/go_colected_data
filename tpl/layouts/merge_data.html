@@ -1,0 +1,31 @@
+{{template "head" .}}
+<body>
+
+<div class="container">
+	<h2>Merge data</h2>
+	{{template "alert" .}}
+
+	<form id="merge" method="post" enctype="multipart/form-data" action="/merge_data">
+
+		<div class="row">
+			<div class="btn-group">
+				<a href="/index" class="btn btn-success"><i class="fa fa-backward" aria-hidden="true"></i> Back</a>
+				<button type="submit" id="save" class="btn btn-primary"><i class="fa fa fa-share-alt" aria-hidden="true"></i> Merge</button>
+			</div>
+		</div>
+		<br>
+		<div class="row">
+			<div class="btn-group">
+				<label class="btn btn-default">
+					Browse <input type="file" class="hide" name="file" id="file" required>
+				</label>
+				<input type="text" id="label"  class="btn" placeholder="File name" disabled>
+			</div>
+		</div>
+	</form>
+</div>
+</body>
+
+{{template "postEnd" .}}
+<script src="../../public/js/{{.action}}.js"></script>
+</html>
